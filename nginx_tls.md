@@ -14,7 +14,8 @@ In this project we'll register our website using LetsEnrcypt Certificate Authori
 - Register a new domain name and configure secured connection using SSL/TLS certificates
 
 Your target architecture will look like this:
-*image archi
+
+![](https://github.com/Arafly/Nginx_LB_TLS/blob/master/assets/nginx_lb.png)
 
 ## Configure Nginx As A Load Balancer
 
@@ -53,4 +54,28 @@ Executing: /lib/systemd/systemd-sysv-install enable nginx
              └─1974 nginx: worker process
 May 11 21:15:12 nginx-lb systemd[1]: Starting A high performance web server and >
 May 11 21:15:12 nginx-lb systemd[1]: Started A high performance web server...
+```
+
+3. Create a config file for nginx, and paste in the following lines:
+
+`sudo vi /etc/nginx/sites-available/load_balancer.conf`
+
+```
+#insert following configuration into http section
+
+ upstream myproject {
+    server Web1 weight=5;
+    server Web2 weight=5;
+  }
+
+server {
+    listen 80;
+    server_name www.domain.com;
+    location / {
+      proxy_pass http://myproject;
+    }
+  }
+
+#comment out this line
+#       include /etc/nginx/sites-enabled/*;
 ```

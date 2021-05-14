@@ -137,3 +137,67 @@ nginx: configuration file /etc/nginx/nginx.conf test is successful
 
 `sudo systemctl reload nginx`
 
+## Register a new domain name and configure secured connection using SSL/TLS certificates
+
+In order to get a valid SSL certificate - we'll need to register a new domain name, you can do it using any Domain name registrar - a company that manages reservation of domain names. The most popular ones are: Godaddy.com, Domain.com, Bluehost.com (I used freenom.com)
+
+- Register a new domain name with any registrar of your choice in any domain zone (e.g. .com, .net, .org, .edu, .info, .xyz or any other).
+- Create a DNS Zone (I used GCP, so Cloud DNS is the de facto networking service, feel free to use whatever the equivalence is in your Cloud Provider).
+- Establish an handshake between your newly created zone and your domain, by copying over the name servers from your Cloud DNS to your Domain.
+
+*image nameserver
+
+- Update the *A record* in your Cloud DNS to point to Nginx LB Public address
+
+*image A_records
+
+By following all of these processes above, we can be sure there's a secured handshake between the three parties ie. Nginx Load Balancer, Cloud DNS and the Web Servers.
+
+
+
+
+### Install Certbot
+```
+$ sudo systemctl status snapd
+● snapd.service - Snap Daemon
+     Loaded: loaded (/lib/systemd/system/snapd.service; enabled; vendor preset: enabled)
+     Active: active (running) since Wed 2021-05-12 02:33:26 UTC; 2 days ago
+TriggeredBy: ● snapd.socket
+   Main PID: 2848 (snapd)
+      Tasks: 13 (limit: 4713)
+     Memory: 59.7M
+     CGroup: /system.slice/snapd.service
+             └─2848 /usr/lib/snapd/snapd
+May 12 08:23:26 nginx-lb snapd[2848]: storehelpers.go:551: 
+ 
+$ sudo snap install --classic
+ certbot
+certbot 1.15.0 from Certbot Project (certbot-eff✓) installed
+```
+
+`sudo apt install python3-certbot-nginx -y`
+
+```
+IMPORTANT NOTES:                                                             
+ - Congratulations! Your certificate and chain have been saved at:           
+   /etc/letsencrypt/live/molokofi.ml/fullchain.pem
+   Your key file has been saved at:
+   /etc/letsencrypt/live/molokofi.ml/privkey.pem
+   Your cert will expire on 2021-08-12. To obtain a new or tweaked
+   version of this certificate in the future, simply run certbot again
+   with the "certonly" option. To non-interactively renew *all* of
+   your certificates, run "certbot renew"
+ - Your account credentials have been saved in your Certbot
+   configuration directory at /etc/letsencrypt. You should make a
+   secure backup of this folder now. This configuration directory will
+   also contain certificates and private keys obtained by Certbot so
+   making regular backups of this folder is ideal.
+ - If you like Certbot, please consider supporting our work by:
+   Donating to ISRG / Let's Encrypt:   https://letsencrypt.org/donate
+   Donating to EFF:                    https://eff.org/donate-le
+
+```
+
+### Cronjob
+
+`sudo nano crontab -e`

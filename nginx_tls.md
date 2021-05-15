@@ -93,6 +93,8 @@ server {
 #       include /etc/nginx/sites-enabled/*;
 ```
 
+> My load_balancer.conf contains my domain name instead of default `server_name www.domain.com`
+
 - Remove the default nginx config file;
 
 `sudo rm -rf /etc/nginx/sites-enabled/default`
@@ -145,20 +147,27 @@ In order to get a valid SSL certificate - we'll need to register a new domain na
 - Create a DNS Zone (I used GCP, so Cloud DNS is the de facto networking service, feel free to use whatever the equivalence is in your Cloud Provider).
 - Establish an handshake between your newly created zone and your domain, by copying over the name servers from your Cloud DNS to your Domain.
 
-*image nameserver
+![](https://github.com/Arafly/Nginx_LB_TLS/blob/master/assets/nameserver.PNG)
 
 - Update the *A record* in your Cloud DNS to point to Nginx LB Public address
 
-*image A_records
+![](https://github.com/Arafly/Nginx_LB_TLS/blob/master/assets/a_records.PNG)
 
 By following all of these processes above, we can be sure there's a secured handshake between the three parties ie. Nginx Load Balancer, Cloud DNS and the Web Servers.
 
-
-
-
 ### Install Certbot
+
+- Install certbot (you can either use snap or apt for the package manager)
+
+`sudo apt install certbot`
+
+Or
+
+`$ sudo systemctl status snapd`
+
 ```
-$ sudo systemctl status snapd
+Output:
+
 ● snapd.service - Snap Daemon
      Loaded: loaded (/lib/systemd/system/snapd.service; enabled; vendor preset: enabled)
      Active: active (running) since Wed 2021-05-12 02:33:26 UTC; 2 days ago
@@ -170,12 +179,25 @@ TriggeredBy: ● snapd.socket
              └─2848 /usr/lib/snapd/snapd
 May 12 08:23:26 nginx-lb snapd[2848]: storehelpers.go:551: 
  
-$ sudo snap install --classic
- certbot
+```
+
+`$ sudo snap install --classic certbot`
+
+```
+Output:
+
 certbot 1.15.0 from Certbot Project (certbot-eff✓) installed
 ```
 
+- Also install a crucial certbot dependency
+
 `sudo apt install python3-certbot-nginx -y`
+
+- Request for a TLS certificate for your domain:
+
+`sudo certbot --nginx -d molokofi.ml -d www.molokofi.ml`
+
+At the end of all the resulting prompts, you should end up with something like this:
 
 ```
 IMPORTANT NOTES:                                                             
@@ -198,6 +220,20 @@ IMPORTANT NOTES:
 
 ```
 
-### Cronjob
+You shall be able to access your website by using HTTPS protocol (that uses TCP port 443) and see a padlock pictogram in your browser’s search string. Click on the padlock icon and you can see the details of the certificate issued for your website.
+
+![](https://github.com/Arafly/Nginx_LB_TLS/blob/master/assets/certs.PNG)
+
+### Setup a Cronjob for periodic renewal of the TLS Cert
+
+It's best pracice is to have a scheduled job that to run renew command periodically. So let's configure a cronjob to run the command twice a day.
 
 `sudo nano crontab -e`
+
+Add following line:
+
+`* */12 * * *   root /usr/bin/certbot renew > /dev/null 2>&1
+`
+
+### **Congratulations!**
+You've just implemented an Nginx Load Balancing Web Solution with secured HTTPS connection with periodically updated SSL/TLS certificates.
